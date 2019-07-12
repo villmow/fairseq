@@ -10,12 +10,10 @@ import itertools
 import numpy as np
 import os
 
-from torch.utils.data import ConcatDataset
-
 from fairseq.data import (
-    Dictionary, IndexedInMemoryDataset, IndexedRawTextDataset,
+    ConcatDataset, Dictionary, indexed_dataset,
     SentenceClassificationDataset, TokenBlockDataset,
-    IndexedDataset)
+    )
 from fairseq.meters import ClassificationMeter
 
 from . import FairseqTask, register_task
@@ -63,7 +61,7 @@ class SentenceClassificationTask(FairseqTask):
 
         return cls(args, dictionary)
 
-    def load_dataset(self, split, combine=False):
+    def load_dataset(self, split, combine=False, **kwargs):
         """Load a given dataset split.
         Args:
             split (str): name of the split (e.g., train, valid, test)
@@ -75,12 +73,10 @@ class SentenceClassificationTask(FairseqTask):
         for k in itertools.count():
             split_k = split + (str(k) if k > 0 else '')
             path = os.path.join(self.args.data, split_k)
+            ds = indexed_dataset.make_dataset(path, impl=self.args.dataset_impl,
+                                              fix_lua_indexing=True, dictionary=self.dictionary)
 
-            if self.args.raw_text and IndexedRawTextDataset.exists(path):
-                ds = IndexedRawTextDataset(path, self.dictionary)
-            elif not self.args.raw_text and IndexedInMemoryDataset.exists(path):
-                ds = IndexedDataset(path, fix_lua_indexing=True)
-            else:
+            if ds is None:
                 if k > 0:
                     break
                 else:
@@ -89,7 +85,7 @@ class SentenceClassificationTask(FairseqTask):
             loaded_datasets.append(
                 TokenBlockDataset(
                     ds, 0, pad=self.dictionary.pad(), eos=self.dictionary.eos(),
-                    break_mode='eos', include_targets=False, use_bos=self.use_bos, bos=self.dictionary.bos()
+                    break_mode='eos', include_targets=False#, use_bos=self.use_bos, bos=self.dictionary.bos()
                 ))
 
             with open(path + '.lbl', 'r') as lbl_f:
@@ -149,13 +145,13 @@ class SentenceClassificationTask(FairseqTask):
             loss = loss.sum()
             logging_output['loss'] = loss.item()
 
-            if False:
-                correct = pos.new_zeros(pos.shape)
-                correct[pos] = correct_pos
-                correct[neg] = correct_neg
-                incorrect = ~correct
-                incorrect_ids = sample['id'][incorrect.nonzero()]
-                logging_output['extra_metrics']['misclassified'] = incorrect_ids.squeeze().tolist()
+            # if False:
+            #     correct = pos.new_zeros(pos.shape)
+            #     correct[pos] = correct_pos
+            #     correct[neg] = correct_neg
+            #     incorrect = ~correct
+            #     incorrect_ids = sample['id'][incorrect.nonzero()]
+            #     logging_output['extra_metrics']['misclassified'] = incorrect_ids.squeeze().tolist()
 
         return loss, sample_size, logging_output
 

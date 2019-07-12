@@ -21,6 +21,8 @@ from .masked_lm_dataset import MaskedLMDataset
 from .monolingual_dataset import MonolingualDataset
 from .noising import NoisingDataset
 from .round_robin_zip_datasets import RoundRobinZipDatasets
+from .sentence_classification_dataset import SentenceClassificationDataset
+from .sentence_pair_classification_dataset import SentencePairClassificationDataset
 from .token_block_dataset import TokenBlockDataset
 from .transform_eos_dataset import TransformEosDataset
 from .transform_eos_lang_pair_dataset import TransformEosLangPairDataset
@@ -54,6 +56,8 @@ __all__ = [
     'NoisingDataset',
     'RawAudioDataset',
     'RoundRobinZipDatasets',
+    'SentenceClassificationDataset',
+    'SentencePairClassificationDataset',
     'ShardedIterator',
     'TokenBlockDataset',
     'TransformEosDataset',
